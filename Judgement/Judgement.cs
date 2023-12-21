@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Judgement
 {
-  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.1.2")]
+  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.2.0")]
 
   public class Judgement : BaseUnityPlugin
   {

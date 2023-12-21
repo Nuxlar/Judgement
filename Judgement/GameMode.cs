@@ -13,7 +13,8 @@ using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.SceneManagement;
 using EntityStates.Missions.BrotherEncounter;
 using MonoMod.Cil;
-using Mono.Cecil.Cil;
+using EntityStates.Missions.Arena.NullWard;
+using UnityEngine.Networking.Types;
 
 namespace Judgement
 {
@@ -22,11 +23,13 @@ namespace Judgement
         public static GameObject judgementRunPrefab;
         public static GameObject extraGameModeMenu;
         private int currentWave = 0;
-        private bool shouldDropRewards = false;
+        private int availableHeals = 3;
+        private int purchaseCounter = 0;
         private bool shouldGoBazaar = true;
         private bool isFirstStage = true;
         private Vector3 safeWardPos = Vector3.zero;
-        private Dictionary<CharacterMaster, float> persistentHP = new();
+        private Dictionary<NetworkInstanceId, float> persistentHP = new();
+        private Dictionary<NetworkInstanceId, int> persistentCurse = new();
         private SceneDef voidPlains = Addressables.LoadAssetAsync<SceneDef>("RoR2/DLC1/itgolemplains/itgolemplains.asset").WaitForCompletion();
         private SceneDef voidAqueduct = Addressables.LoadAssetAsync<SceneDef>("RoR2/DLC1/itgoolake/itgoolake.asset").WaitForCompletion();
         private SceneDef voidAphelian = Addressables.LoadAssetAsync<SceneDef>("RoR2/DLC1/itancientloft/itancientloft.asset").WaitForCompletion();
@@ -46,6 +49,15 @@ namespace Judgement
 
         private static readonly GameObject voidChest = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/VoidChest/VoidChest.prefab").WaitForCompletion();
         private static readonly GameObject portalPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/PortalArena/PortalArena.prefab").WaitForCompletion();
+        private static readonly GameObject rerollEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/LunarRecycler/LunarRerollEffect.prefab").WaitForCompletion();
+        private GameObject greenPrinter = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/DuplicatorLarge/DuplicatorLarge.prefab").WaitForCompletion();
+        private SpawnCard lockBox = Addressables.LoadAssetAsync<SpawnCard>("RoR2/Junk/TreasureCache/iscLockbox.asset").WaitForCompletion();
+        private SpawnCard freeChest = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC1/FreeChest/iscFreeChest.asset").WaitForCompletion();
+        private GameObject woodShrine = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/ShrineHealing/ShrineHealing.prefab").WaitForCompletion();
+        private GameObject shrineUseEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/ShrineUseEffect.prefab").WaitForCompletion();
+
+        // 
+        private static readonly GameObject blueFire = PrefabAPI.InstantiateClone(Addressables.LoadAssetAsync<GameObject>("RoR2/Base/LunarRecycler/LunarRecycler.prefab").WaitForCompletion().transform.GetChild(2).gameObject, "BlueFireNux");
 
         private static readonly PostProcessProfile ppProfile = Addressables.LoadAssetAsync<PostProcessProfile>("RoR2/Base/title/ppSceneEclipseStandard.asset").WaitForCompletion();
         private static readonly Material spaceStarsMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/eclipseworld/matEclipseStarsSpheres.mat").WaitForCompletion();
@@ -53,7 +65,7 @@ namespace Judgement
 
         public GameMode()
         {
-
+            blueFire.AddComponent<NetworkIdentity>();
             judgementRunPrefab = PrefabAPI.InstantiateClone(new GameObject("xJudgementRun"), "xJudgementRun");
             judgementRunPrefab.AddComponent<NetworkIdentity>();
             PrefabAPI.RegisterNetworkPrefab(judgementRunPrefab);
@@ -112,14 +124,18 @@ namespace Judgement
 
             ContentAddition.AddGameMode(judgementRunPrefab);
             IL.RoR2.SceneDirector.PopulateScene += RemoveExtraLoot;
+            On.RoR2.PurchaseInteraction.OnInteractionBegin += PurchaseInteraction_OnInteractionBegin;
             On.RoR2.Run.Start += Run_Start;
             On.RoR2.Stage.Start += Stage_Start;
+            On.RoR2.CharacterMaster.SpawnBody += CharacterMaster_SpawnBody;
             On.RoR2.BazaarController.Start += BazaarController_Start;
+            On.RoR2.PurchaseInteraction.GetInteractability += PurchaseInteraction_GetInteractability;
             On.RoR2.MusicController.PickCurrentTrack += MusicController_PickCurrentTrack;
             On.EntityStates.Missions.BrotherEncounter.BossDeath.OnEnter += BossDeathOnEnter;
             On.RoR2.UI.LanguageTextMeshController.Start += LanguageTextMeshController_Start;
             On.RoR2.GameModeCatalog.SetGameModes += GameModeCatalog_SetGameModes;
             On.RoR2.InfiniteTowerRun.OverrideRuleChoices += InfiniteTowerRun_OverrideRuleChoices;
+            On.RoR2.CharacterBody.Start += CharacterBody_Start;
             On.RoR2.CharacterMaster.OnBodyStart += CharacterMaster_OnBodyStart;
             On.RoR2.SceneExitController.Begin += SceneExitController_Begin;
             On.RoR2.Run.PickNextStageScene += Run_PickNextStageScene;
@@ -130,22 +146,18 @@ namespace Judgement
             On.RoR2.InfiniteTowerBossWaveController.PreStartClient += InfiniteTowerBossWaveController_PreStartClient;
             On.RoR2.InfiniteTowerRun.RecalculateDifficultyCoefficentInternal += InfiniteTowerRun_RecalculateDifficultyCoefficentInternal;
         }
-        /*
-                public void SavePersistentHP()
-                {
-                    if (!NetworkServer.active)
-                        return;
-                    foreach (PlayerCharacterMasterController instance in PlayerCharacterMasterController.instances)
-                    {
-                        CharacterBody body = instance.master?.GetBody();
-                        if (body != null && body.isPlayerControlled)
-                        {
-                            if (body.healthComponent)
-                                this.persistentHP[instance.master] = body.healthComponent.health;
-                        }
-                    }
-                }
-        */
+        public void SavePersistentHP()
+        {
+            foreach (PlayerCharacterMasterController instance in PlayerCharacterMasterController.instances)
+            {
+                if (this.persistentHP.TryGetValue(instance.master.netId, out float hp))
+                    this.persistentHP[instance.master.netId] = instance.master.GetBody().healthComponent.health;
+                else
+                    this.persistentHP.Add(instance.master.netId, instance.master.GetBody().healthComponent.health);
+
+            }
+        }
+
         private void RemoveExtraLoot(ILContext il)
         {
             ILCursor ilCursor = new(il);
@@ -178,17 +190,205 @@ namespace Judgement
 
         public void LoadPersistentHP(CharacterBody body)
         {
-            if (!NetworkServer.active || body.master == null || !this.persistentHP.TryGetValue(body.master, out float hp))
-                return;
-            if (body.healthComponent)
+            if (body.master && body.healthComponent && this.persistentHP.TryGetValue(body.master.netId, out float hp))
                 body.healthComponent.health = hp;
-            this.persistentHP.Remove(body.master);
+        }
+        public void LoadPersistentCurse(CharacterBody body)
+        {
+            if (body.master && this.persistentCurse.TryGetValue(body.master.netId, out int curseStacks))
+            {
+                for (int i = 0; i < curseStacks; i++)
+                    body.AddBuff(RoR2Content.Buffs.PermanentCurse);
+            }
         }
         // bazaar spawnpos -81.5 -24.8 -16.6
         // portal spawnpos -128.6 -25.4 -14.4
         // key/shorm1 -112.0027 -23.7788 -4.5843
         // key/shorm2 -103.7627 -23.8988 -4.7243
+        // vradle -90.5743 -24.3739 -11.5119
 
+        public Interactability PurchaseInteraction_GetInteractability(On.RoR2.PurchaseInteraction.orig_GetInteractability orig, PurchaseInteraction self, Interactor activator)
+        {
+            return SceneInfo.instance.sceneDef.nameToken == "MAP_BAZAAR_TITLE" && self.name == "LunarRecycler" ? Interactability.ConditionsNotMet : orig(self, activator);
+        }
+
+        private CharacterBody CharacterMaster_SpawnBody(On.RoR2.CharacterMaster.orig_SpawnBody orig, CharacterMaster self, Vector3 position, Quaternion rotation)
+        {
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.teamIndex == TeamIndex.Player)
+                return orig(self, position, Quaternion.Euler(358, 210, 0));
+            else
+                return orig(self, position, rotation);
+        }
+
+        private void PurchaseInteraction_OnInteractionBegin(On.RoR2.PurchaseInteraction.orig_OnInteractionBegin orig, PurchaseInteraction self, Interactor activator)
+        {
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "VoidChest(Clone)")
+            {
+                CharacterBody body = activator.GetComponent<CharacterBody>();
+
+                if (this.persistentCurse.TryGetValue(body.master.netId, out int _))
+                    this.persistentCurse[body.master.netId] += 15;
+                else
+                    this.persistentCurse.Add(body.master.netId, 15);
+
+                for (int i = 0; i < 15; i++)
+                    body.AddBuff(RoR2Content.Buffs.PermanentCurse);
+
+            }
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "ShrineHealing(Clone)")
+            {
+                if (this.availableHeals == 0)
+                    return;
+                this.availableHeals -= 1;
+                Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + this.availableHeals + " heals left." });
+                activator.GetComponent<CharacterBody>().healthComponent.health = activator.GetComponent<CharacterBody>().healthComponent.fullHealth;
+                EffectManager.SpawnEffect(shrineUseEffect, new EffectData()
+                {
+                    origin = self.transform.position,
+                    rotation = Quaternion.identity,
+                    scale = 1f,
+                    color = Color.green
+                }, true);
+                return;
+            }
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "DuplicatorLarge(Clone)")
+            {
+                int count = activator.GetComponent<CharacterBody>().inventory.GetItemCount(DLC1Content.Items.RegeneratingScrap);
+                if (count == 0)
+                    return;
+            }
+            if (Run.instance && Run.instance.name.Contains("Judgement") && (self.name == "LunarShopTerminal" || self.name == "LunarShopTerminal (1)"))
+            {
+                ShopTerminalBehavior shopTerminalBehavior = self.GetComponent<ShopTerminalBehavior>();
+                self.GetComponent<PurchaseInteraction>().available = false;
+                Vector3 velocity = shopTerminalBehavior.transform.TransformVector(shopTerminalBehavior.dropVelocity);
+                this.purchaseCounter += 1;
+                Util.PlaySound("Play_UI_tripleChestShutter", self.gameObject);
+                EffectManager.SpawnEffect(rerollEffect, new EffectData()
+                {
+                    origin = self.gameObject.transform.GetChild(2).gameObject.transform.position,
+                }, true);
+                self.gameObject.transform.GetChild(0).GetChild(0).GetChild(4).gameObject.SetActive(false);
+                if ((bool)shopTerminalBehavior.animator)
+                {
+                    int layerIndex = shopTerminalBehavior.animator.GetLayerIndex("Body");
+                    shopTerminalBehavior.animator.PlayInFixedTime("Open", layerIndex);
+                }
+                Vector3 position = self.gameObject.transform.GetChild(0).GetChild(0).GetChild(2).gameObject.transform.position;
+                if (this.currentWave == 0)
+                {
+                    switch (this.purchaseCounter)
+                    {
+                        case 1:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 2:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 3:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 4:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (this.purchaseCounter)
+                    {
+                        case 1:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 2:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 3:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 4:
+                            if (this.currentWave == 4)
+                            {
+                                PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                                {
+                                    pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
+                                    rotation = Quaternion.identity,
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
+                            }
+                            else
+                            {
+                                PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                                {
+                                    pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
+                                    rotation = Quaternion.identity,
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
+                            }
+                            break;
+                        case 5:
+                            if (this.currentWave == 4)
+                            {
+                                PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                                {
+                                    pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
+                                    rotation = Quaternion.identity,
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
+                            }
+                            break;
+                    }
+                }
+            }
+            else
+                orig(self, activator);
+        }
+        // 
         private void BazaarController_Start(On.RoR2.BazaarController.orig_Start orig, BazaarController self)
         {
             orig(self);
@@ -201,6 +401,14 @@ namespace Judgement
                     shouldGoBazaar = false;
                     GameObject portal = GameObject.Instantiate(portalPrefab, new Vector3(-128.6f, -25.4f, -14.4f), Quaternion.Euler(0, 90, 0));
                     NetworkServer.Spawn(portal);
+                    if (this.availableHeals != 0)
+                    {
+                        GameObject shrine = GameObject.Instantiate(woodShrine, new Vector3(-112.0027f, -24f, -4.5843f), Quaternion.Euler(0, 180, 0));
+                        shrine.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
+                        shrine.GetComponent<PurchaseInteraction>().contextToken = "Full Heal Shrine (Limited Uses)";
+                        shrine.GetComponent<PurchaseInteraction>().displayNameToken = "Full Heal Shrine (Limited Uses)";
+                        NetworkServer.Spawn(shrine);
+                    }
                     holder.transform.GetChild(2).gameObject.SetActive(false); // disable seershop
                     holder.transform.GetChild(3).gameObject.SetActive(false); // disable cauldrons
                     GameObject kickout = SceneInfo.instance.transform.Find("KickOutOfShop").gameObject;
@@ -209,109 +417,39 @@ namespace Judgement
                         kickout.gameObject.SetActive(true);
                         kickout.transform.GetChild(8).gameObject.SetActive(false);
                     }
-                    foreach (Transform child in holder.transform.GetChild(0).GetChild(2))
-                        GameObject.Destroy(child.gameObject);
+                    holder.transform.GetChild(0).GetChild(2).Rotate(0, 0, 50);
 
-                    // getchild(0) lunar shop
-                    // getchild(0)(2) table, disable all children
-                    // item positions 
-                    // new Vector3(-73.9124f, -24.0468f, -37.9145f)  new Vector3(-77.4559f, -24.0468f, -37.4419f)  new Vector3(-80.6413f, -24.0468f, -42.1104f) new Vector3(-79.2328f, -24.0468f, -45.2478f) |middle new Vector3(-80.0593f, -24.0468f, -39.2219f)|
-                    if (this.currentWave == 0)
+                    if (this.currentWave == 0 || this.currentWave == 4)
                     {
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-73.9124f, -24f, -37.9145f), Vector3.zero);
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-77.4559f, -24f, -37.4419f), Vector3.zero);
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-80.6413f, -24f, -42.1104f), Vector3.zero);
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(EquipmentIndex.None),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-79.2328f, -24f, -45.2478f), Vector3.zero);
+                        GameObject vradle = GameObject.Instantiate(voidChest, new Vector3(-90.5743f, -25f, -11.5119f), Quaternion.identity);
+                        vradle.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
+                        NetworkServer.Spawn(vradle);
                     }
-                    else
+
+                    int num = 0;
+                    foreach (CharacterMaster readOnlyInstances in CharacterMaster.readOnlyInstancesList)
                     {
-                        if (this.currentWave == 4)
-                        {
-                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                            {
-                                pickupIndex = PickupCatalog.FindPickupIndex(EquipmentIndex.None),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
-                                rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, new Vector3(-80.0593f, -24f, -39.2219f), Vector3.zero);
-                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                            {
-                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
-                                rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, new Vector3(-73.9124f, -24f, -37.9145f), Vector3.zero);
-                        }
-                        if (this.currentWave != 4)
-                        {
-                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                            {
-                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
-                                rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, new Vector3(-73.9124f, -24f, -37.9145f), Vector3.zero);
-                        }
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-77.4559f, -24f, -37.4419f), Vector3.zero);
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-80.6413f, -24f, -42.1104f), Vector3.zero);
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, new Vector3(-79.2328f, -24f, -45.2478f), Vector3.zero);
+                        if (readOnlyInstances.inventory.GetItemCount(DLC1Content.Items.RegeneratingScrap) > 0)
+                            ++num;
                     }
-                    // Form/Keybox
+                    if (num > 0)
+                    {
+                        GameObject printer = GameObject.Instantiate(greenPrinter, new Vector3(-108.7849f, -27f, -46.7452f), Quaternion.identity);
+                        NetworkServer.Spawn(printer);
+                    }
                     int num2 = 0;
                     foreach (CharacterMaster readOnlyInstances in CharacterMaster.readOnlyInstancesList)
                     {
                         if (readOnlyInstances.inventory.GetItemCount(RoR2Content.Items.TreasureCache) > 0)
                             ++num2;
                     }
-                    for (int index = 0; index < num2; ++index)
+                    if (num2 > 0)
                     {
                         DirectorCore instance = DirectorCore.instance;
-                        SpawnCard spawnCard = LegacyResourcesAPI.Load<SpawnCard>("SpawnCards/InteractableSpawnCard/iscLockbox");
+                        SpawnCard spawnCard = lockBox;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-103.7627f, -23.8988f, -4.7243f);
+                        placementRule.position = new Vector3(-103.7627f, -24.25f, -4.7243f);
                         Xoroshiro128Plus rng = self.rng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
@@ -322,17 +460,36 @@ namespace Judgement
                         if (readOnlyInstances.inventory.GetItemCount(DLC1Content.Items.FreeChest) > 0)
                             ++num4;
                     }
-                    for (int index = 0; index < num4; ++index)
+                    if (num4 > 0)
                     {
                         DirectorCore instance = DirectorCore.instance;
-                        SpawnCard spawnCard = LegacyResourcesAPI.Load<SpawnCard>("SpawnCards/InteractableSpawnCard/iscFreeChest");
+                        SpawnCard spawnCard = freeChest;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-112.0027f, -23.7788f, -4.5843f);
+                        placementRule.position = new Vector3(-122.9354f, -26f, -29.2073f);
                         Xoroshiro128Plus rng = self.rng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
-                        instance.TrySpawnObject(directorSpawnRequest);
+                        instance.TrySpawnObject(directorSpawnRequest).transform.Rotate(0, 180, 0);
+                    };
+                    for (int i = 0; i < holder.transform.GetChild(0).GetChild(2).childCount; i++)
+                    {
+                        Transform child = holder.transform.GetChild(0).GetChild(2).GetChild(i);
+                        if (this.currentWave != 4 && i == 2)
+                        {
+                            GameObject.Destroy(child.gameObject);
+                            continue;
+                        }
+                        GameObject.Destroy(child.gameObject.GetComponent<RoR2.Hologram.HologramProjector>());
+                        child.transform.GetChild(0).GetChild(0).GetChild(3).gameObject.SetActive(false);
+                        GameObject fire = GameObject.Instantiate(blueFire, child.transform.GetChild(0).GetChild(0));
+                        fire.transform.localPosition = new Vector3(0, 1.5f, 0);
+                        NetworkServer.Spawn(fire);
+                        child.gameObject.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
                     }
+                    // getchild(0) lunar shop
+                    // getchild(0)(2) table, disable all children
+                    // item positions 
+                    // new Vector3(-73.9124f, -24.0468f, -37.9145f)  new Vector3(-77.4559f, -24.0468f, -37.4419f)  new Vector3(-80.6413f, -24.0468f, -42.1104f) new Vector3(-79.2328f, -24.0468f, -45.2478f) |middle new Vector3(-80.0593f, -24.0468f, -39.2219f)|
                 }
             }
         }
@@ -364,16 +521,19 @@ namespace Judgement
             if (self.name.Contains("Judgement"))
             {
                 currentWave = 0;
-                shouldDropRewards = false;
+                purchaseCounter = 0;
+                availableHeals = 3;
                 isFirstStage = true;
                 shouldGoBazaar = true;
+                persistentCurse.Clear();
+                persistentHP.Clear();
             }
         }
 
         private static void MusicController_PickCurrentTrack(On.RoR2.MusicController.orig_PickCurrentTrack orig, MusicController self, ref MusicTrackDef newTrack)
         {
             orig(self, ref newTrack);
-            if (Run.instance && Run.instance.name.Contains("Judgement") && newTrack.cachedName != "muSong25")
+            if (Run.instance && Run.instance.name.Contains("Judgement") && SceneManager.GetActiveScene().name != "moon2")
                 newTrack = MusicTrackCatalog.FindMusicTrackDef("muSong23");
         }
 
@@ -438,9 +598,16 @@ namespace Judgement
                     return;
                 }
                 shouldGoBazaar = true;
+                purchaseCounter = 0;
                 if (currentWave == 10)
                 {
                     GameObject.Destroy(self.fogDamageController.gameObject);
+                    GameObject director = GameObject.Find("Director");
+                    if (director)
+                    {
+                        foreach (CombatDirector cd in director.GetComponents<CombatDirector>())
+                            GameObject.Destroy(cd);
+                    }
                     return;
                 }
                 currentWave += 2;
@@ -465,56 +632,8 @@ namespace Judgement
         private void InfiniteTowerWaveController_DropRewards(On.RoR2.InfiniteTowerWaveController.orig_DropRewards orig, InfiniteTowerWaveController self)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement"))
-            {
-                if (this.currentWave != 10)
-                    return;
-                if (!this.shouldDropRewards)
-                {
-                    this.shouldDropRewards = true;
-                    return;
-                }
-                Vector3 dropPos = this.safeWardPos;
-                double angle = 360 / 4;
-                Vector3 velocity = Quaternion.AngleAxis(UnityEngine.Random.Range(0, 360), Vector3.up) * (Vector3.up * 40f + Vector3.forward * 5f);
-                Vector3 up = Vector3.up;
-                Quaternion quaternion = Quaternion.AngleAxis((float)angle, up);
-                Vector3 position = dropPos + new Vector3(0, 5f, 0);
-                for (int i = 0; i < 2; i++)
-                {
-                    if (UnityEngine.Random.value < 0.1f)
-                    {
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, Run.instance.runRNG),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, position, velocity);
-                        velocity = quaternion * velocity;
-                    }
-                    else
-                    {
-                        PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                        {
-                            pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                            pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, Run.instance.runRNG),
-                            rotation = Quaternion.identity,
-                            prefabOverride = potentialPickup
-                        }, position, velocity);
-                        velocity = quaternion * velocity;
-                    }
-                    PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
-                    {
-                        pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                        pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
-                        rotation = Quaternion.identity,
-                        prefabOverride = potentialPickup
-                    }, position, velocity);
-                    velocity = quaternion * velocity;
-                }
-            }
-            else
-                orig(self);
+                return;
+            orig(self);
         }
 
         private void InfiniteTowerBossWaveController_PreStartClient(On.RoR2.InfiniteTowerBossWaveController.orig_PreStartClient orig, InfiniteTowerBossWaveController self)
@@ -528,15 +647,18 @@ namespace Judgement
         {
             if (Run.instance && Run.instance.name.Contains("Judgement"))
             {
-                // SavePersistentHP();
+                SavePersistentHP();
                 if (this.currentWave == 0)
                     Run.instance.nextStageScene = voidPlains;
                 if (this.currentWave == 2)
                 {
-                    if (UnityEngine.Random.value < 0.5f)
-                        Run.instance.nextStageScene = voidAqueduct;
-                    else
-                        Run.instance.nextStageScene = voidAphelian;
+                    int[] array = Array.Empty<int>();
+                    WeightedSelection<SceneDef> weightedSelection = new WeightedSelection<SceneDef>();
+                    weightedSelection.AddChoice(voidAqueduct, 1f);
+                    weightedSelection.AddChoice(voidAphelian, 1f);
+                    int toChoiceIndex = weightedSelection.EvaluateToChoiceIndex(Run.instance.runRNG.nextNormalizedFloat, array);
+                    WeightedSelection<SceneDef>.ChoiceInfo choice = weightedSelection.GetChoice(toChoiceIndex);
+                    Run.instance.nextStageScene = choice.value;
                 }
                 if (this.currentWave == 4)
                     Run.instance.nextStageScene = voidRPD;
@@ -558,6 +680,16 @@ namespace Judgement
             orig(self);
         }
 
+        private void CharacterBody_Start(On.RoR2.CharacterBody.orig_Start orig, CharacterBody self)
+        {
+            orig(self);
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.isPlayerControlled && !self.HasBuff(RoR2Content.Buffs.Immune))
+            {
+                LoadPersistentHP(self);
+                LoadPersistentCurse(self);
+            }
+        }
+
         private void CharacterMaster_OnBodyStart(
           On.RoR2.CharacterMaster.orig_OnBodyStart orig,
           CharacterMaster self,
@@ -570,12 +702,10 @@ namespace Judgement
             {
                 body.baseRegen = 0f;
                 body.levelRegen = 0f;
-                // if (!body.HasBuff(RoR2Content.Buffs.Immune))
-                // LoadPersistentHP(body);
                 if (SceneManager.GetActiveScene().name == "bazaar" && body.characterMotor)
                     body.characterMotor.Motor.SetPositionAndRotation(new Vector3(-81.5f, -24.8f, -16.6f), Quaternion.Euler(0, 90, 0));
                 if (SceneManager.GetActiveScene().name == "moon2" && body.characterMotor && !body.HasBuff(RoR2Content.Buffs.Immune))
-                    body.characterMotor.Motor.SetPositionAndRotation(new Vector3(100, 500, 100), Quaternion.identity);
+                    body.characterMotor.Motor.SetPositionAndRotation(new Vector3(127, 500, 101), Quaternion.identity);
             }
         }
         private void BossDeathOnEnter(On.EntityStates.Missions.BrotherEncounter.BossDeath.orig_OnEnter orig, BossDeath self)
@@ -601,15 +731,7 @@ namespace Judgement
           ulong runSeed)
         {
             if ((bool)(UnityEngine.Object)PreGameController.instance && PreGameController.instance.gameModeIndex == GameModeCatalog.FindGameModeIndex("xJudgementRun"))
-            {
                 self.ForceChoice(mustInclude, mustExclude, "Difficulty.Hard");
-                foreach (ArtifactDef artifactDef in ArtifactCatalog.artifactDefs)
-                {
-                    RuleChoiceDef choice5 = RuleCatalog.FindRuleDef("Artifacts." + artifactDef.cachedName)?.FindChoice("Off");
-                    if (choice5 != null)
-                        self.ForceChoice(mustInclude, mustExclude, choice5);
-                }
-            }
             else orig(self, mustInclude, mustExclude, runSeed);
         }
 

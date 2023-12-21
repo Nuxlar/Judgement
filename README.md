@@ -1,18 +1,31 @@
 # Judgement
 
-Monsoon difficulty is forced, compatible with Mithrix mods (Umbral, Inferno, AotK). You have 0 natural regen.
+Monsoon difficulty is forced, compatible with Mithrix mods (Umbral, Inferno, AotK). You have 0 natural regen. Your HP persists between stages. You'll have a 3 use full heal station. No multiplayer support (for now)
 
-There are a total of 5 rounds then you fight Mithrix at the end. Each round consists of a regular enemy wave and a boss wave then you move onto another stage for the next round (10 total waves). You start out with a red item and an equipment. At the start of every round afterwards you'll get 4 items (2 white, 2 greens with a 10% chance to be red instead). At the end of the 10th wave you'll get 1 last round of items then you'll be teleported to immediately fight Mithrix.
+There are a total of 5 rounds then you fight Mithrix at the end. Each round consists of a regular enemy wave and a boss wave then you move onto another stage for the next round (10 total waves). You start out with a red item and an equipment. At the start of every round you'll start in the bazaar where you choose items and some items that were previously useless now have a function at the bazaar (keys, form, regen scrap). At the end of the 10th wave you'll get 1 last round of items then you'll be teleported to fight Mithrix.
+
+### TODOs
+
+- Multiplayer Compat
 
 ## Changelog
 
-- make keyboxes/forms spawn in the bubble
-- seed stage2/red chances
-- mp compat
-- hub world
-- fix umbral theme overlap
-
 **1.2.0**
+
+- Adds "Hub Realm" at the bazaar
+- Adds persistent HP (HP persists between stages)
+- Adds keybox/form support
+- Adds regen scrap support
+- Adds item dispensers to bazaar
+- Adds limited use HP shrine to bazaar
+- Adds seeding (able to use LobbySeed for fully seeded runs)
+- Adds "AltMithrixTheme" compat (fixes music overlap)
+- Adds void cradles (take perma-perma curse)
+- Changes Moon spawn so the fight doesn't start immediately
+- Removes artifact lock
+- Fixes camera not facing the right way in the bazaar (thanks Mark!)
+- Fixes extra mobs spawning during the mithrix fight
+- Fixes dependencies
 
 **1.1.2**
 
