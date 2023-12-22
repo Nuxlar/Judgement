@@ -12,6 +12,7 @@ namespace Judgement
     public void Awake()
     {
       new GameMode();
+      new SimHooks();
     }
 
   }

@@ -6,9 +6,16 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ### TODOs
 
-- Multiplayer Compat
+- Multiplayer Support
 
 ## Changelog
+
+**1.2.1**
+
+- Adds void key support
+- Fixes Judgement breaking Simulacrum
+- Fixes Bazaar Slab always being disabled
+- Internal code changes to prep for mp support
 
 **1.2.0**
 
