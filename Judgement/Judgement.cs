@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Judgement
 {
-  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.2.0")]
+  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.2.1")]
 
   public class Judgement : BaseUnityPlugin
   {
@@ -12,7 +12,9 @@ namespace Judgement
     public void Awake()
     {
       new GameMode();
+      new Hooks();
       new SimHooks();
+      new BazaarHooks();
     }
 
   }

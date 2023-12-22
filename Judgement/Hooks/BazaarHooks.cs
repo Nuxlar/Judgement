@@ -67,7 +67,7 @@ namespace Judgement
                     if (judgementRun.currentWave == 0 || judgementRun.currentWave == 4)
                     {
                         GameObject vradle = GameObject.Instantiate(voidChest, new Vector3(-90.5743f, -25f, -11.5119f), Quaternion.identity);
-                        vradle.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
+                        // vradle.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
                         NetworkServer.Spawn(vradle);
                     }
 
@@ -94,7 +94,7 @@ namespace Judgement
                         SpawnCard spawnCard = lockBox;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-103.7627f, -24.25f, -4.7243f);
+                        placementRule.position = new Vector3(-103.7627f, -24.5f, -4.7243f);
                         Xoroshiro128Plus rng = self.rng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
@@ -102,7 +102,7 @@ namespace Judgement
                     int num3 = 0;
                     foreach (CharacterMaster readOnlyInstances in CharacterMaster.readOnlyInstancesList)
                     {
-                        if (readOnlyInstances.inventory.GetItemCount(RoR2Content.Items.TreasureCache) > 0)
+                        if (readOnlyInstances.inventory.GetItemCount(DLC1Content.Items.TreasureCacheVoid) > 0)
                             ++num3;
                     }
                     if (num3 > 0)
@@ -111,7 +111,7 @@ namespace Judgement
                         SpawnCard spawnCard = lockBoxVoid;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-103.7627f, -24.25f, -4.7243f);
+                        placementRule.position = new Vector3(-89.5709f, -23.5f, -6.589f);
                         Xoroshiro128Plus rng = self.rng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
@@ -164,11 +164,11 @@ namespace Judgement
                 CharacterBody body = activator.GetComponent<CharacterBody>();
 
                 if (judgementRun.persistentCurse.TryGetValue(body.master.netId, out int _))
-                    judgementRun.persistentCurse[body.master.netId] += 15;
+                    judgementRun.persistentCurse[body.master.netId] += 25;
                 else
-                    judgementRun.persistentCurse.Add(body.master.netId, 15);
+                    judgementRun.persistentCurse.Add(body.master.netId, 25);
 
-                for (int i = 0; i < 15; i++)
+                for (int i = 0; i < 25; i++)
                     body.AddBuff(RoR2Content.Buffs.PermanentCurse);
 
             }

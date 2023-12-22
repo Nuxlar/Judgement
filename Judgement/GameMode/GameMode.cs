@@ -41,7 +41,9 @@ namespace Judgement
             judgementRun.uiPrefab = component2.uiPrefab;
 
             judgementRun.defaultWavePrefab = component2.defaultWavePrefab;
-            judgementRun.waveCategories = component2.waveCategories;
+            InfiniteTowerWaveCategory[] waveCategories = new InfiniteTowerWaveCategory[component2.waveCategories.Length];
+            Array.Copy(component2.waveCategories, waveCategories, component2.waveCategories.Length);
+            judgementRun.waveCategories = waveCategories;
             foreach (InfiniteTowerWaveCategory cat in judgementRun.waveCategories)
             {
                 if (cat.name == "BossWaveCategory")
