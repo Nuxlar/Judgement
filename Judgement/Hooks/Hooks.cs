@@ -1,5 +1,6 @@
 using RoR2;
 using System;
+using System.Collections.ObjectModel;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
@@ -23,7 +24,9 @@ namespace Judgement
         private SceneDef voidAbyssal = Addressables.LoadAssetAsync<SceneDef>("RoR2/DLC1/itdampcave/itdampcave.asset").WaitForCompletion();
         private SceneDef voidMeadow = Addressables.LoadAssetAsync<SceneDef>("RoR2/DLC1/itskymeadow/itskymeadow.asset").WaitForCompletion();
 
-        private static GameEndingDef judgementRunEnding = Addressables.LoadAssetAsync<GameEndingDef>("RoR2/Base/WeeklyRun/PrismaticTrialEnding.asset").WaitForCompletion();
+        private GameEndingDef judgementRunEnding = Addressables.LoadAssetAsync<GameEndingDef>("RoR2/Base/WeeklyRun/PrismaticTrialEnding.asset").WaitForCompletion();
+
+        private GameObject tpOutController = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/TeleportOutController.prefab").WaitForCompletion();
 
         public Hooks()
         {
@@ -90,6 +93,16 @@ namespace Judgement
 
             ilCursor.Index = 0;
 
+            if (ilCursor.TryGotoNext(0, x => ILPatternMatchingExt.MatchLdsfld(x, typeof(DLC1Content.Items), "TreasureCacheVoid")))
+            {
+                ilCursor.Index += 2;
+                ilCursor.EmitDelegate(ItemFunction);
+            }
+            else
+                Debug.LogWarning("Judgement: TreasureCacheVoid IL hook failed");
+
+            ilCursor.Index = 0;
+
             if (ilCursor.TryGotoNext(0, x => ILPatternMatchingExt.MatchLdsfld(x, typeof(DLC1Content.Items), "FreeChest")))
             {
                 ilCursor.Index += 2;
@@ -114,7 +127,16 @@ namespace Judgement
         private CharacterBody CharacterMaster_SpawnBody(On.RoR2.CharacterMaster.orig_SpawnBody orig, CharacterMaster self, Vector3 position, Quaternion rotation)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement") && self.teamIndex == TeamIndex.Player)
-                return orig(self, position, Quaternion.Euler(358, 210, 0));
+            {
+                string sceneName = SceneManager.GetActiveScene().name;
+
+                if (sceneName == "bazaar")
+                    return orig(self, new Vector3(-81.5f, -24.8f, -16.6f), Quaternion.Euler(358, 210, 0));
+                else if (sceneName == "moon2")
+                    return orig(self, new Vector3(127, 500, 101), Quaternion.Euler(358, 210, 0));
+                else
+                    return orig(self, position, rotation);
+            }
             else
                 return orig(self, position, rotation);
         }
@@ -214,8 +236,25 @@ namespace Judgement
                     SceneDef sceneDef = SceneCatalog.FindSceneDef("bazaar");
                     Run.instance.nextStageScene = sceneDef;
                 }
+                ReadOnlyCollection<CharacterMaster> onlyInstancesList = CharacterMaster.readOnlyInstancesList;
+                for (int index = 0; index < onlyInstancesList.Count; ++index)
+                {
+                    CharacterMaster component = onlyInstancesList[index].GetComponent<CharacterMaster>();
+                    if ((bool)component.GetComponent<SetDontDestroyOnLoad>())
+                    {
+                        GameObject bodyObject = component.GetBodyObject();
+                        if ((bool)bodyObject)
+                        {
+                            GameObject gameObject = UnityEngine.Object.Instantiate(tpOutController, bodyObject.transform.position, Quaternion.identity);
+                            gameObject.GetComponent<TeleportOutController>().Networktarget = bodyObject;
+                            NetworkServer.Spawn(gameObject);
+                        }
+                    }
+                }
+                self.SetState(SceneExitController.ExitState.Finished);
             }
-            orig(self);
+            else
+                orig(self);
         }
 
         private void CharacterBody_Start(On.RoR2.CharacterBody.orig_Start orig, CharacterBody self)
@@ -225,6 +264,8 @@ namespace Judgement
             {
                 LoadPersistentHP(self);
                 LoadPersistentCurse(self);
+                self.baseRegen = 0f;
+                self.levelRegen = 0f;
             }
         }
 
@@ -238,12 +279,7 @@ namespace Judgement
                 return;
             if (body.isPlayerControlled)
             {
-                body.baseRegen = 0f;
-                body.levelRegen = 0f;
-                if (SceneManager.GetActiveScene().name == "bazaar" && body.characterMotor)
-                    body.characterMotor.Motor.SetPositionAndRotation(new Vector3(-81.5f, -24.8f, -16.6f), Quaternion.Euler(0, 90, 0));
-                if (SceneManager.GetActiveScene().name == "moon2" && body.characterMotor && !body.HasBuff(RoR2Content.Buffs.Immune))
-                    body.characterMotor.Motor.SetPositionAndRotation(new Vector3(127, 500, 101), Quaternion.identity);
+
             }
         }
         private void BossDeathOnEnter(On.EntityStates.Missions.BrotherEncounter.BossDeath.orig_OnEnter orig, BossDeath self)

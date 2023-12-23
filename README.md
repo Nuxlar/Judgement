@@ -4,11 +4,16 @@ Monsoon difficulty is forced, compatible with Mithrix mods (Umbral, Inferno, Aot
 
 There are a total of 5 rounds then you fight Mithrix at the end. Each round consists of a regular enemy wave and a boss wave then you move onto another stage for the next round (10 total waves). You start out with a red item and an equipment. At the start of every round you'll start in the bazaar where you choose items and some items that were previously useless now have a function at the bazaar (keys, form, regen scrap). At the end of the 10th wave you'll get 1 last round of items then you'll be teleported to fight Mithrix.
 
-### TODOs
-
-- Multiplayer Support
-
 ## Changelog
+
+**1.3.0**
+
+- Adds Multiplayer Support!
+- Adds faster portals
+- Adds persistent gold
+- Adds better seeding
+- Fixes item seeding not working if picked in different order
+- Fixes void lockboxes showing up in the normal stages
 
 **1.2.1**
 

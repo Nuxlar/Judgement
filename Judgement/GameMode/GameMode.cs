@@ -5,16 +5,9 @@ using RoR2.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
-using UnityEngine.Rendering.PostProcessing;
-using UnityEngine.SceneManagement;
-using EntityStates.Missions.BrotherEncounter;
-using MonoMod.Cil;
-using EntityStates.Missions.Arena.NullWard;
-using UnityEngine.Networking.Types;
 
 namespace Judgement
 {
@@ -33,7 +26,7 @@ namespace Judgement
             InfiniteTowerRun component2 = simClone.GetComponent<InfiniteTowerRun>();
 
             JudgementRun judgementRun = judgementRunPrefab.AddComponent<JudgementRun>();
-            judgementRun.nameToken = "Judgement Trial";
+            judgementRun.nameToken = "Judgement";
             judgementRun.userPickable = true;
             judgementRun.startingSceneGroup = component2.startingSceneGroup;
             judgementRun.gameOverPrefab = component2.gameOverPrefab;

@@ -14,10 +14,8 @@ namespace Judgement
         private BasicPickupDropTable dtRed = Addressables.LoadAssetAsync<BasicPickupDropTable>("RoR2/Base/Common/dtTier3Item.asset").WaitForCompletion();
 
         private GameObject potentialPickup = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/OptionPickup/OptionPickup.prefab").WaitForCompletion();
-        private GameObject voidChest = Addressables.LoadAssetAsync<GameObject>("RoR2/DLC1/VoidChest/VoidChest.prefab").WaitForCompletion();
         private GameObject portalPrefab = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/PortalArena/PortalArena.prefab").WaitForCompletion();
         private GameObject rerollEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/LunarRecycler/LunarRerollEffect.prefab").WaitForCompletion();
-        private GameObject greenPrinter = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/DuplicatorLarge/DuplicatorLarge.prefab").WaitForCompletion();
         private GameObject woodShrine = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/ShrineHealing/ShrineHealing.prefab").WaitForCompletion();
         private GameObject shrineUseEffect = Addressables.LoadAssetAsync<GameObject>("RoR2/Base/Common/VFX/ShrineUseEffect.prefab").WaitForCompletion();
         private GameObject blueFire = PrefabAPI.InstantiateClone(Addressables.LoadAssetAsync<GameObject>("RoR2/Base/LunarRecycler/LunarRecycler.prefab").WaitForCompletion().transform.GetChild(2).gameObject, "BlueFireNux");
@@ -25,6 +23,8 @@ namespace Judgement
         private SpawnCard lockBox = Addressables.LoadAssetAsync<SpawnCard>("RoR2/Junk/TreasureCache/iscLockbox.asset").WaitForCompletion();
         private SpawnCard lockBoxVoid = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC1/TreasureCacheVoid/iscLockboxVoid.asset").WaitForCompletion();
         private SpawnCard freeChest = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC1/FreeChest/iscFreeChest.asset").WaitForCompletion();
+        private SpawnCard greenPrinter = Addressables.LoadAssetAsync<SpawnCard>("RoR2/Base/DuplicatorLarge/iscDuplicatorLarge.asset").WaitForCompletion();
+        private SpawnCard voidChest = Addressables.LoadAssetAsync<SpawnCard>("RoR2/DLC1/VoidChest/iscVoidChest.asset").WaitForCompletion();
 
         public BazaarHooks()
         {
@@ -50,6 +50,8 @@ namespace Judgement
                     {
                         GameObject shrine = GameObject.Instantiate(woodShrine, new Vector3(-112.0027f, -24f, -4.5843f), Quaternion.Euler(0, 180, 0));
                         shrine.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
+                        shrine.GetComponent<PurchaseInteraction>().Networkcost = 0;
+                        shrine.GetComponent<PurchaseInteraction>().Networkavailable = true;
                         shrine.GetComponent<PurchaseInteraction>().contextToken = "Full Heal Shrine (Limited Uses)";
                         shrine.GetComponent<PurchaseInteraction>().displayNameToken = "Full Heal Shrine (Limited Uses)";
                         NetworkServer.Spawn(shrine);
@@ -66,9 +68,17 @@ namespace Judgement
 
                     if (judgementRun.currentWave == 0 || judgementRun.currentWave == 4)
                     {
-                        GameObject vradle = GameObject.Instantiate(voidChest, new Vector3(-90.5743f, -25f, -11.5119f), Quaternion.identity);
-                        // vradle.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
-                        NetworkServer.Spawn(vradle);
+                        for (int i = 0; i < Run.instance.participatingPlayerCount; i++)
+                        {
+                            DirectorCore instance = DirectorCore.instance;
+                            SpawnCard spawnCard = voidChest;
+                            DirectorPlacementRule placementRule = new DirectorPlacementRule();
+                            placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
+                            placementRule.position = new Vector3(-90f, -25f, -11.5f);
+                            Xoroshiro128Plus rng = Run.instance.runRNG;
+                            DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
+                            instance.TrySpawnObject(directorSpawnRequest);
+                        }
                     }
 
                     int num = 0;
@@ -79,8 +89,14 @@ namespace Judgement
                     }
                     if (num > 0)
                     {
-                        GameObject printer = GameObject.Instantiate(greenPrinter, new Vector3(-108.7849f, -27f, -46.7452f), Quaternion.identity);
-                        NetworkServer.Spawn(printer);
+                        DirectorCore instance = DirectorCore.instance;
+                        SpawnCard spawnCard = greenPrinter;
+                        DirectorPlacementRule placementRule = new DirectorPlacementRule();
+                        placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
+                        placementRule.position = new Vector3(-108.7849f, -27f, -46.7452f);
+                        Xoroshiro128Plus rng = Run.instance.runRNG;
+                        DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
+                        instance.TrySpawnObject(directorSpawnRequest);
                     }
                     int num2 = 0;
                     foreach (CharacterMaster readOnlyInstances in CharacterMaster.readOnlyInstancesList)
@@ -88,14 +104,15 @@ namespace Judgement
                         if (readOnlyInstances.inventory.GetItemCount(RoR2Content.Items.TreasureCache) > 0)
                             ++num2;
                     }
-                    if (num2 > 0)
+                    Vector3[] lockboxPositions = new Vector3[] { new Vector3(-103.7627f, -24.5f, -4.7243f), new Vector3(-101.7627f, -24.5f, -4.7243f), new Vector3(-105.7627f, -24.5f, -4.7243f), new Vector3(-107.7627f, -24.5f, -4.7243f) };
+                    for (int i = 0; i < num2; i++)
                     {
                         DirectorCore instance = DirectorCore.instance;
                         SpawnCard spawnCard = lockBox;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-103.7627f, -24.5f, -4.7243f);
-                        Xoroshiro128Plus rng = self.rng;
+                        placementRule.position = lockboxPositions[i];
+                        Xoroshiro128Plus rng = Run.instance.runRNG;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     }
@@ -105,33 +122,35 @@ namespace Judgement
                         if (readOnlyInstances.inventory.GetItemCount(DLC1Content.Items.TreasureCacheVoid) > 0)
                             ++num3;
                     }
-                    if (num3 > 0)
+                    Vector3[] lockboxVoidPositions = new Vector3[] { new Vector3(-89.5709f, -23.5f, -6.589f), new Vector3(-87.5709f, -23.5f, -6f), new Vector3(-85.5709f, -23.5f, -5.589f), new Vector3(-83.5709f, -23.5f, -5f) };
+                    for (int i = 0; i < num3; i++)
                     {
                         DirectorCore instance = DirectorCore.instance;
                         SpawnCard spawnCard = lockBoxVoid;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-89.5709f, -23.5f, -6.589f);
-                        Xoroshiro128Plus rng = self.rng;
+                        placementRule.position = lockboxVoidPositions[i];
+                        Xoroshiro128Plus rng = Run.instance.runRNG;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     }
                     int num4 = 0;
+                    Vector3[] freeChestPositions = new Vector3[] { new Vector3(-122.9354f, -26f, -29.2073f), new Vector3(-123.8197f, -25.1055f, -22.2822f), new Vector3(-117.0709f, -24.2098f, -32.8076f), new Vector3(-110.2542f, -24.979f, -37.4319f) };
                     foreach (CharacterMaster readOnlyInstances in CharacterMaster.readOnlyInstancesList)
                     {
                         if (readOnlyInstances.inventory.GetItemCount(DLC1Content.Items.FreeChest) > 0)
                             ++num4;
                     }
-                    if (num4 > 0)
+                    for (int i = 0; i < num4; i++)
                     {
                         DirectorCore instance = DirectorCore.instance;
                         SpawnCard spawnCard = freeChest;
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
-                        placementRule.position = new Vector3(-122.9354f, -26f, -29.2073f);
-                        Xoroshiro128Plus rng = self.rng;
+                        placementRule.position = freeChestPositions[i];
+                        Xoroshiro128Plus rng = Run.instance.runRNG;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
-                        instance.TrySpawnObject(directorSpawnRequest).transform.Rotate(0, 180, 0);
+                        instance.TrySpawnObject(directorSpawnRequest);
                     };
                     for (int i = 0; i < holder.transform.GetChild(0).GetChild(2).childCount; i++)
                     {
@@ -147,6 +166,13 @@ namespace Judgement
                         fire.transform.localPosition = new Vector3(0, 1.5f, 0);
                         NetworkServer.Spawn(fire);
                         child.gameObject.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
+                    }
+                    for (int i = 0; i < Run.instance.participatingPlayerCount - 1; i++)
+                    {
+                        GameObject newTable = GameObject.Instantiate(holder.transform.GetChild(0).GetChild(2), holder.transform.GetChild(0)).gameObject;
+                        newTable.transform.localPosition = new Vector3(2.83f, -8.51f, -3.39f);
+                        newTable.transform.localRotation = Quaternion.Euler(270, 330.3174f, 0);
+                        NetworkServer.Spawn(newTable);
                     }
                     // getchild(0) lunar shop
                     // getchild(0)(2) table, disable all children
@@ -178,7 +204,8 @@ namespace Judgement
                     return;
                 judgementRun.availableHeals -= 1;
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + " heals left." });
-                activator.GetComponent<CharacterBody>().healthComponent.health = activator.GetComponent<CharacterBody>().healthComponent.fullHealth;
+                HealthComponent healthComponent = activator.GetComponent<CharacterBody>().healthComponent;
+                healthComponent.Heal(healthComponent.missingCombinedHealth, procChainMask: default);
                 EffectManager.SpawnEffect(shrineUseEffect, new EffectData()
                 {
                     origin = self.transform.position,
@@ -221,7 +248,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -230,7 +257,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -239,7 +266,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -248,10 +275,12 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
+                            if (Run.instance.participatingPlayerCount > 1)
+                                judgementRun.purchaseCounter = 0;
                             break;
                     }
                 }
@@ -263,7 +292,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -272,7 +301,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -281,7 +310,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, self.rng),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -292,7 +321,7 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, self.rng),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, Run.instance.runRNG),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);
@@ -302,10 +331,12 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, self.rng),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, Run.instance.runRNG),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);
+                                if (Run.instance.participatingPlayerCount > 1)
+                                    judgementRun.purchaseCounter = 0;
                             }
                             break;
                         case 5:
@@ -314,10 +345,12 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, self.rng),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, Run.instance.runRNG),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);
+                                if (Run.instance.participatingPlayerCount > 1)
+                                    judgementRun.purchaseCounter = 0;
                             }
                             break;
                     }

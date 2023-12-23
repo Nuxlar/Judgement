@@ -1,10 +1,8 @@
 using BepInEx;
-using RoR2;
-using UnityEngine;
 
 namespace Judgement
 {
-  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.2.1")]
+  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.3.0")]
 
   public class Judgement : BaseUnityPlugin
   {
