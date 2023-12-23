@@ -75,7 +75,7 @@ namespace Judgement
                             DirectorPlacementRule placementRule = new DirectorPlacementRule();
                             placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
                             placementRule.position = new Vector3(-90f, -25f, -11.5f);
-                            Xoroshiro128Plus rng = Run.instance.runRNG;
+                            Xoroshiro128Plus rng = judgementRun.bazaarRng;
                             DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                             instance.TrySpawnObject(directorSpawnRequest);
                         }
@@ -94,7 +94,7 @@ namespace Judgement
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
                         placementRule.position = new Vector3(-108.7849f, -27f, -46.7452f);
-                        Xoroshiro128Plus rng = Run.instance.runRNG;
+                        Xoroshiro128Plus rng = judgementRun.bazaarRng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     }
@@ -112,7 +112,7 @@ namespace Judgement
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
                         placementRule.position = lockboxPositions[i];
-                        Xoroshiro128Plus rng = Run.instance.runRNG;
+                        Xoroshiro128Plus rng = judgementRun.bazaarRng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     }
@@ -130,7 +130,7 @@ namespace Judgement
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
                         placementRule.position = lockboxVoidPositions[i];
-                        Xoroshiro128Plus rng = Run.instance.runRNG;
+                        Xoroshiro128Plus rng = judgementRun.bazaarRng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     }
@@ -148,7 +148,7 @@ namespace Judgement
                         DirectorPlacementRule placementRule = new DirectorPlacementRule();
                         placementRule.placementMode = DirectorPlacementRule.PlacementMode.Direct;
                         placementRule.position = freeChestPositions[i];
-                        Xoroshiro128Plus rng = Run.instance.runRNG;
+                        Xoroshiro128Plus rng = judgementRun.bazaarRng;
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     };
@@ -190,11 +190,11 @@ namespace Judgement
                 CharacterBody body = activator.GetComponent<CharacterBody>();
 
                 if (judgementRun.persistentCurse.TryGetValue(body.master.netId, out int _))
-                    judgementRun.persistentCurse[body.master.netId] += 25;
+                    judgementRun.persistentCurse[body.master.netId] += 20;
                 else
-                    judgementRun.persistentCurse.Add(body.master.netId, 25);
+                    judgementRun.persistentCurse.Add(body.master.netId, 20);
 
-                for (int i = 0; i < 25; i++)
+                for (int i = 0; i < 20; i++)
                     body.AddBuff(RoR2Content.Buffs.PermanentCurse);
 
             }
@@ -248,7 +248,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -257,7 +257,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -266,7 +266,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -275,7 +275,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -292,7 +292,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -301,7 +301,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -310,7 +310,7 @@ namespace Judgement
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, Run.instance.runRNG),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -321,7 +321,7 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, Run.instance.runRNG),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);
@@ -331,7 +331,7 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, Run.instance.runRNG),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);
@@ -345,7 +345,7 @@ namespace Judgement
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {
                                     pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
-                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, Run.instance.runRNG),
+                                    pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
                                     prefabOverride = potentialPickup
                                 }, position, velocity);

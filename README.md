@@ -6,6 +6,15 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ## Changelog
 
+**1.3.1**
+
+- Increases base credit boost 0 -> 5%
+- Increase player base damage by 25%
+- Reduces credit increase boost 25% -> 10%
+- Reduces void cradle curse 25 -> 20
+- Fixes seeding
+- Fixes engi turrets not placing properly on the moon
+
 **1.3.0**
 
 - Adds Multiplayer Support!

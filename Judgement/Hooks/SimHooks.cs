@@ -27,7 +27,10 @@ namespace Judgement
         private void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement"))
-                self.linearCreditsPerWave *= 1.25f;
+            {
+                self.baseCredits *= 1.05f;
+                self.linearCreditsPerWave *= 1.1f;
+            }
             orig(self);
         }
 
@@ -90,6 +93,7 @@ namespace Judgement
                 }
                 GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
                 judgementRun.shouldGoBazaar = true;
+                judgementRun.isFirstStage = false;
                 judgementRun.purchaseCounter = 0;
                 if (judgementRun.currentWave == 10)
                 {

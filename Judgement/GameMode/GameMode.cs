@@ -136,6 +136,7 @@ namespace Judgement
             public bool shouldGoBazaar = true;
             public bool isFirstStage = true;
             public Vector3 safeWardPos = Vector3.zero;
+            public Xoroshiro128Plus bazaarRng;
             public Dictionary<NetworkInstanceId, float> persistentHP = new();
             public Dictionary<NetworkInstanceId, int> persistentCurse = new();
         }

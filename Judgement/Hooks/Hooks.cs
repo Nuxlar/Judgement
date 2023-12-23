@@ -33,6 +33,7 @@ namespace Judgement
             IL.RoR2.SceneDirector.PopulateScene += RemoveExtraLoot;
             On.RoR2.PurchaseInteraction.GetInteractability += PurchaseInteraction_GetInteractability;
             On.RoR2.Run.PickNextStageScene += Run_PickNextStageScene;
+            On.RoR2.Run.Start += Run_Start;
             On.RoR2.Stage.Start += Stage_Start;
             On.RoR2.CharacterMaster.SpawnBody += CharacterMaster_SpawnBody;
             On.RoR2.MusicController.PickCurrentTrack += MusicController_PickCurrentTrack;
@@ -124,15 +125,26 @@ namespace Judgement
             return SceneInfo.instance.sceneDef.nameToken == "MAP_BAZAAR_TITLE" && self.name == "LunarRecycler" && Run.instance && Run.instance.name.Contains("Judgement") ? Interactability.ConditionsNotMet : orig(self, activator);
         }
 
+        private void Run_Start(On.RoR2.Run.orig_Start orig, Run self)
+        {
+            orig(self);
+            if (self.name.Contains("Judgement"))
+            {
+                GameMode.JudgementRun judgementRun = self.gameObject.GetComponent<GameMode.JudgementRun>();
+                judgementRun.bazaarRng = new Xoroshiro128Plus(self.seed ^ 1635UL);
+            }
+        }
+
         private CharacterBody CharacterMaster_SpawnBody(On.RoR2.CharacterMaster.orig_SpawnBody orig, CharacterMaster self, Vector3 position, Quaternion rotation)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement") && self.teamIndex == TeamIndex.Player)
             {
                 string sceneName = SceneManager.GetActiveScene().name;
+                GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
 
-                if (sceneName == "bazaar")
+                if (sceneName == "bazaar" && (judgementRun.isFirstStage || judgementRun.persistentHP.TryGetValue(self.netId, out float _)))
                     return orig(self, new Vector3(-81.5f, -24.8f, -16.6f), Quaternion.Euler(358, 210, 0));
-                else if (sceneName == "moon2")
+                else if (sceneName == "moon2" && judgementRun.persistentHP.TryGetValue(self.netId, out float _) && !self.IsExtraLifePendingServer())
                     return orig(self, new Vector3(127, 500, 101), Quaternion.Euler(358, 210, 0));
                 else
                     return orig(self, position, rotation);
@@ -193,7 +205,6 @@ namespace Judgement
                 GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
                 if (judgementRun.isFirstStage)
                 {
-                    judgementRun.isFirstStage = false;
                     SceneDef sceneDef = SceneCatalog.FindSceneDef("bazaar");
                     self.nextStageScene = sceneDef;
                 }
@@ -266,6 +277,7 @@ namespace Judgement
                 LoadPersistentCurse(self);
                 self.baseRegen = 0f;
                 self.levelRegen = 0f;
+                self.baseDamage *= 1.25f;
             }
         }
 
