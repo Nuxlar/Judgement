@@ -66,7 +66,7 @@ namespace Judgement
                     }
                     holder.transform.GetChild(0).GetChild(2).Rotate(0, 0, 50);
 
-                    if (judgementRun.currentWave == 0 || judgementRun.currentWave == 4)
+                    if (judgementRun.currentWave == 4 || judgementRun.currentWave == 8)
                     {
                         for (int i = 0; i < Run.instance.participatingPlayerCount; i++)
                         {
@@ -205,7 +205,7 @@ namespace Judgement
                 judgementRun.availableHeals -= 1;
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + " heals left." });
                 HealthComponent healthComponent = activator.GetComponent<CharacterBody>().healthComponent;
-                healthComponent.Heal(healthComponent.missingCombinedHealth, procChainMask: default);
+                healthComponent.health = healthComponent.fullHealth;
                 EffectManager.SpawnEffect(shrineUseEffect, new EffectData()
                 {
                     origin = self.transform.position,
@@ -265,8 +265,8 @@ namespace Judgement
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
-                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
-                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, judgementRun.bazaarRng),
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
@@ -316,7 +316,7 @@ namespace Judgement
                             }, position, velocity);
                             break;
                         case 4:
-                            if (judgementRun.currentWave == 4)
+                            if (judgementRun.currentWave == 4 || judgementRun.currentWave == 8)
                             {
                                 PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                                 {

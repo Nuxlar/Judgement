@@ -6,6 +6,24 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ## Changelog
 
+**1.3.4**
+
+- Finally fixes weird scaling
+
+**1.3.3**
+
+- Reduces base credit boost 10% -> 0%
+- Increases credit increase boost 0% -> 10%
+
+**1.3.2**
+
+- Increases base credit boost 5% -> 10%
+- Increases scaling by 25%
+- Moves Reds and Void cradles to waves 4 and 8
+- Reduces credit increase boost 10% -> 0%
+- Reduces healing efficiency by 25%
+- Removes Void boss event
+
 **1.3.1**
 
 - Increases base credit boost 0 -> 5%

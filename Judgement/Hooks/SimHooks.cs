@@ -27,10 +27,7 @@ namespace Judgement
         private void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement"))
-            {
-                self.baseCredits *= 1.05f;
-                self.linearCreditsPerWave *= 1.1f;
-            }
+                self.linearCreditsPerWave = 25f;
             orig(self);
         }
 
@@ -66,7 +63,7 @@ namespace Judgement
             {
                 DifficultyDef difficultyDef = DifficultyCatalog.GetDifficultyDef(self.selectedDifficulty);
                 float num1 = 1.5f * (float)self.waveIndex;
-                float num2 = 0.0506f * (difficultyDef.scalingValue * 2f);
+                float num2 = 0.0506f * (difficultyDef.scalingValue * 2.25f);
                 float num3 = Mathf.Pow(1.02f, (float)self.waveIndex);
                 self.difficultyCoefficient = (float)(1.0 + (double)num2 * (double)num1) * num3;
                 self.compensatedDifficultyCoefficient = self.difficultyCoefficient;

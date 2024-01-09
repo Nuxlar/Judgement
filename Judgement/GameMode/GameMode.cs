@@ -45,7 +45,7 @@ namespace Judgement
                     List<InfiniteTowerWaveCategory.WeightedWave> weightedWaves = new();
                     foreach (InfiniteTowerWaveCategory.WeightedWave item in cat.wavePrefabs)
                     {
-                        if (!item.wavePrefab.name.Contains("Brother") && !item.wavePrefab.name.Contains("Lunar"))
+                        if (!item.wavePrefab.name.Contains("Brother") && !item.wavePrefab.name.Contains("Lunar") && !item.wavePrefab.name.Contains("Void"))
                             weightedWaves.Add(item);
                     }
                     cat.wavePrefabs = weightedWaves.ToArray();

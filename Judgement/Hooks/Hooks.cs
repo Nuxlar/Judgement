@@ -41,6 +41,18 @@ namespace Judgement
             On.RoR2.CharacterBody.Start += CharacterBody_Start;
             On.RoR2.CharacterMaster.OnBodyStart += CharacterMaster_OnBodyStart;
             On.RoR2.SceneExitController.Begin += SceneExitController_Begin;
+            On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
+        }
+
+        private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
+        {
+            if (Run.instance && Run.instance.name.Contains("Judgement") && self.body.isPlayerControlled)
+            {
+                amount *= 0.75f;
+                return orig(self, amount, procChainMask, nonRegen);
+            }
+            else
+                return orig(self, amount, procChainMask, nonRegen);
         }
 
         public void SavePersistentHP()
