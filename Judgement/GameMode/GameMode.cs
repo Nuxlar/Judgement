@@ -131,7 +131,7 @@ namespace Judgement
         public class JudgementRun : InfiniteTowerRun
         {
             public int currentWave = 0;
-            public int availableHeals = 3;
+            public int availableHeals = 2;
             public int purchaseCounter = 0;
             public bool shouldGoBazaar = true;
             public bool isFirstStage = true;

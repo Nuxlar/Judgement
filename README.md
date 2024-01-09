@@ -6,6 +6,12 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ## Changelog
 
+**1.3.5**
+
+- Reduces additional credits per wave 25 -> 12
+- Reduces available full heals 3 -> 2
+- Adds an extra white item for the first wave
+
 **1.3.4**
 
 - Finally fixes weird scaling

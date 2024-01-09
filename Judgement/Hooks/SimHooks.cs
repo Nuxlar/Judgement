@@ -27,7 +27,7 @@ namespace Judgement
         private void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
         {
             if (Run.instance && Run.instance.name.Contains("Judgement"))
-                self.linearCreditsPerWave = 25f;
+                self.linearCreditsPerWave = 12f;
             orig(self);
         }
 

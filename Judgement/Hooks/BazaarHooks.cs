@@ -155,7 +155,7 @@ namespace Judgement
                     for (int i = 0; i < holder.transform.GetChild(0).GetChild(2).childCount; i++)
                     {
                         Transform child = holder.transform.GetChild(0).GetChild(2).GetChild(i);
-                        if (judgementRun.currentWave != 4 && i == 2)
+                        if (judgementRun.currentWave != 0 && judgementRun.currentWave != 4 && i == 2)
                         {
                             GameObject.Destroy(child.gameObject);
                             continue;
@@ -203,7 +203,7 @@ namespace Judgement
                 if (judgementRun.availableHeals == 0)
                     return;
                 judgementRun.availableHeals -= 1;
-                Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + " heals left." });
+                Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + " heal left." });
                 HealthComponent healthComponent = activator.GetComponent<CharacterBody>().healthComponent;
                 healthComponent.health = healthComponent.fullHealth;
                 EffectManager.SpawnEffect(shrineUseEffect, new EffectData()
@@ -265,13 +265,22 @@ namespace Judgement
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
+                                pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
+                                pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
+                                rotation = Quaternion.identity,
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            break;
+                        case 4:
+                            PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
+                            {
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup
                             }, position, velocity);
                             break;
-                        case 4:
+                        case 5:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
                             {
                                 pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
