@@ -41,19 +41,8 @@ namespace Judgement
             On.RoR2.CharacterBody.Start += CharacterBody_Start;
             On.RoR2.CharacterMaster.OnBodyStart += CharacterMaster_OnBodyStart;
             On.RoR2.SceneExitController.Begin += SceneExitController_Begin;
-            On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
         }
 
-        private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
-        {
-            if (Run.instance && Run.instance.name.Contains("Judgement") && self.body.isPlayerControlled)
-            {
-                amount *= 0.75f;
-                return orig(self, amount, procChainMask, nonRegen);
-            }
-            else
-                return orig(self, amount, procChainMask, nonRegen);
-        }
 
         public void SavePersistentHP()
         {
@@ -73,16 +62,6 @@ namespace Judgement
             GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
             if (body.master && body.healthComponent && judgementRun.persistentHP.TryGetValue(body.master.netId, out float hp))
                 body.healthComponent.health = hp;
-        }
-
-        public void LoadPersistentCurse(CharacterBody body)
-        {
-            GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
-            if (body.master && judgementRun.persistentCurse.TryGetValue(body.master.netId, out int curseStacks))
-            {
-                for (int i = 0; i < curseStacks; i++)
-                    body.AddBuff(RoR2Content.Buffs.PermanentCurse);
-            }
         }
 
         private void RemoveExtraLoot(ILContext il)
@@ -286,7 +265,6 @@ namespace Judgement
             if (Run.instance && Run.instance.name.Contains("Judgement") && self.isPlayerControlled && !self.HasBuff(RoR2Content.Buffs.Immune))
             {
                 LoadPersistentHP(self);
-                LoadPersistentCurse(self);
                 self.baseRegen = 0f;
                 self.levelRegen = 0f;
                 self.baseDamage *= 1.25f;

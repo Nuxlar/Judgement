@@ -185,25 +185,13 @@ namespace Judgement
         private void PurchaseInteraction_OnInteractionBegin(On.RoR2.PurchaseInteraction.orig_OnInteractionBegin orig, PurchaseInteraction self, Interactor activator)
         {
             GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
-            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "VoidChest(Clone)")
-            {
-                CharacterBody body = activator.GetComponent<CharacterBody>();
-
-                if (judgementRun.persistentCurse.TryGetValue(body.master.netId, out int _))
-                    judgementRun.persistentCurse[body.master.netId] += 20;
-                else
-                    judgementRun.persistentCurse.Add(body.master.netId, 20);
-
-                for (int i = 0; i < 20; i++)
-                    body.AddBuff(RoR2Content.Buffs.PermanentCurse);
-
-            }
             if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "ShrineHealing(Clone)")
             {
                 if (judgementRun.availableHeals == 0)
                     return;
                 judgementRun.availableHeals -= 1;
-                Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + " heal left." });
+                string chatMessage = judgementRun.availableHeals > 1 ? " heals left." : " heal left.";
+                Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + chatMessage });
                 HealthComponent healthComponent = activator.GetComponent<CharacterBody>().healthComponent;
                 healthComponent.health = healthComponent.fullHealth;
                 EffectManager.SpawnEffect(shrineUseEffect, new EffectData()

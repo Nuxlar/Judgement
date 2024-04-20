@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
+using System.Linq;
 
 namespace Judgement
 {
@@ -34,23 +35,42 @@ namespace Judgement
             judgementRun.uiPrefab = component2.uiPrefab;
 
             judgementRun.defaultWavePrefab = component2.defaultWavePrefab;
-            InfiniteTowerWaveCategory[] waveCategories = new InfiniteTowerWaveCategory[component2.waveCategories.Length];
-            Array.Copy(component2.waveCategories, waveCategories, component2.waveCategories.Length);
-            judgementRun.waveCategories = waveCategories;
-            foreach (InfiniteTowerWaveCategory cat in judgementRun.waveCategories)
+
+            List<InfiniteTowerWaveCategory.WeightedWave> weightedWaves = new();
+            List<InfiniteTowerWaveCategory.WeightedWave> weightedBossWaves = new();
+
+            foreach (InfiniteTowerWaveCategory cat in component2.waveCategories)
             {
                 if (cat.name == "BossWaveCategory")
                 {
-                    cat.availabilityPeriod = 2;
-                    List<InfiniteTowerWaveCategory.WeightedWave> weightedWaves = new();
                     foreach (InfiniteTowerWaveCategory.WeightedWave item in cat.wavePrefabs)
                     {
                         if (!item.wavePrefab.name.Contains("Brother") && !item.wavePrefab.name.Contains("Lunar") && !item.wavePrefab.name.Contains("Void"))
+                            weightedBossWaves.Add(item);
+                    }
+                }
+                else
+                    foreach (InfiniteTowerWaveCategory.WeightedWave item in cat.wavePrefabs)
+                    {
+                        if (!item.wavePrefab.name.Contains("Command"))
                             weightedWaves.Add(item);
                     }
-                    cat.wavePrefabs = weightedWaves.ToArray();
-                }
             }
+
+            InfiniteTowerWaveCategory commonCategory = ScriptableObject.CreateInstance<InfiniteTowerWaveCategory>();
+            commonCategory.name = "CommonWaveCategoryNux";
+            commonCategory.wavePrefabs = weightedWaves.ToArray();
+            commonCategory.availabilityPeriod = 1;
+            commonCategory.minWaveIndex = 0;
+            InfiniteTowerWaveCategory bossCategory = ScriptableObject.CreateInstance<InfiniteTowerWaveCategory>();
+            bossCategory.name = "BossWaveCategoryNux";
+            bossCategory.wavePrefabs = weightedBossWaves.ToArray();
+            bossCategory.availabilityPeriod = 2;
+            bossCategory.minWaveIndex = 0;
+
+            InfiniteTowerWaveCategory[] categories = new InfiniteTowerWaveCategory[] { bossCategory, commonCategory };
+            judgementRun.waveCategories = categories;
+
             judgementRun.defaultWaveEnemyIndicatorPrefab = component2.defaultWaveEnemyIndicatorPrefab;
             judgementRun.enemyItemPattern = component2.enemyItemPattern;
             judgementRun.enemyItemPeriod = 100;
@@ -74,7 +94,6 @@ namespace Judgement
             judgementRunPrefab.AddComponent<EnemyInfoPanelInventoryProvider>();
             judgementRunPrefab.AddComponent<DirectorCore>();
             judgementRunPrefab.AddComponent<ExpansionRequirementComponent>();
-            judgementRunPrefab.AddComponent<RunArtifactManager>();
             judgementRunPrefab.AddComponent<RunCameraManager>();
 
             ContentAddition.AddGameMode(judgementRunPrefab);
@@ -131,7 +150,7 @@ namespace Judgement
         public class JudgementRun : InfiniteTowerRun
         {
             public int currentWave = 0;
-            public int availableHeals = 2;
+            public int availableHeals = 3;
             public int purchaseCounter = 0;
             public bool shouldGoBazaar = true;
             public bool isFirstStage = true;

@@ -13,7 +13,21 @@ namespace Judgement
             On.RoR2.InfiniteTowerRun.MoveSafeWard += InfiniteTowerRun_MoveSafeWard;
             On.RoR2.InfiniteTowerRun.RecalculateDifficultyCoefficentInternal += InfiniteTowerRun_RecalculateDifficultyCoefficentInternal;
             On.RoR2.InfiniteTowerWaveController.DropRewards += InfiniteTowerWaveController_DropRewards;
+            On.RoR2.InfiniteTowerWaveController.OnEnable += InfiniteTowerWaveController_OnEnable;
             On.RoR2.InfiniteTowerBossWaveController.PreStartClient += InfiniteTowerBossWaveController_PreStartClient;
+        }
+
+        private void InfiniteTowerWaveController_OnEnable(On.RoR2.InfiniteTowerWaveController.orig_OnEnable orig, InfiniteTowerWaveController self)
+        {
+            if (Run.instance && Run.instance.name.Contains("Judgement"))
+            {
+                if (self is InfiniteTowerBossWaveController)
+                    self.baseCredits = 400;
+                else
+                    self.baseCredits = 125;
+                // 159 500
+            }
+            orig(self);
         }
 
         private void InfiniteTowerRun_MoveSafeWard(On.RoR2.InfiniteTowerRun.orig_MoveSafeWard orig, InfiniteTowerRun self)
@@ -44,8 +58,45 @@ namespace Judgement
           RuleChoiceMask mustExclude,
           ulong runSeed)
         {
-            if ((bool)(UnityEngine.Object)PreGameController.instance && PreGameController.instance.gameModeIndex == GameModeCatalog.FindGameModeIndex("xJudgementRun"))
-                self.ForceChoice(mustInclude, mustExclude, "Difficulty.Hard");
+            if ((bool)PreGameController.instance && PreGameController.instance.gameModeIndex == GameModeCatalog.FindGameModeIndex("xJudgementRun"))
+            {
+                string[] itemBlacklist = new string[] {
+                    "HealWhileSafe",
+                    "HealingPotion",
+                    "Medkit",
+                    "Tooth",
+                    "Seed",
+                    "TPHealingNova",
+                    "BarrierOnOverHeal",
+                    "ExtraLife",
+                    "ExtraLifeVoid",
+                    "IncreaseHealing",
+                    "NovaOnHeal",
+                    "Plant",
+                    "RepeatHeal",
+                    "Mushroom",
+                    "MushroomVoid",
+                };
+                string[] equipmentBlacklist = new string[] {
+                    "Fruit",
+                    "LifestealOnHit",
+                    "PassiveHealing",
+                    "VendingMachine"
+                };
+
+                foreach (string item in itemBlacklist)
+                {
+                    RuleChoiceDef choice = RuleCatalog.FindRuleDef("Items." + item)?.FindChoice("Off");
+                    if (choice != null)
+                        self.ForceChoice(mustInclude, mustExclude, choice);
+                }
+                foreach (string equipment in equipmentBlacklist)
+                {
+                    RuleChoiceDef choice = RuleCatalog.FindRuleDef("Equipment." + equipment)?.FindChoice("Off");
+                    if (choice != null)
+                        self.ForceChoice(mustInclude, mustExclude, choice);
+                }
+            }
             else orig(self, mustInclude, mustExclude, runSeed);
         }
 
