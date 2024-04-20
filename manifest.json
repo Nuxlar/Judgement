@@ -1,7 +1,7 @@
 ﻿{
   "name": "Judgement",
   "version_number": "1.4.0",
-  "website_url": "",
+  "website_url": "https://github.com/FocusedFault/Judgement/issues",
   "description": "Tweaked version of the Judgement Gamemode from Risk of Rain Returns",
   "dependencies": [
     "RiskofThunder-R2API_ContentManagement-1.0.3",
