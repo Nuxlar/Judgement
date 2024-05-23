@@ -238,8 +238,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 2:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -247,8 +248,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position,
+                            }, velocity);
                             break;
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -256,8 +258,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 4:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -265,8 +268,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 5:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -274,8 +278,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             if (Run.instance.participatingPlayerCount > 1)
                                 judgementRun.purchaseCounter = 0;
                             break;
@@ -291,8 +296,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 2:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -300,8 +306,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -309,8 +316,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup
-                            }, position, velocity);
+                                prefabOverride = potentialPickup,
+                                position = position
+                            }, velocity);
                             break;
                         case 4:
                             if (judgementRun.currentWave == 4 || judgementRun.currentWave == 8)
@@ -320,8 +328,9 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup
-                                }, position, velocity);
+                                    prefabOverride = potentialPickup,
+                                    position = position
+                                }, velocity);
                             }
                             else
                             {
@@ -330,8 +339,9 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup
-                                }, position, velocity);
+                                    prefabOverride = potentialPickup,
+                                    position = position
+                                }, velocity);
                                 if (Run.instance.participatingPlayerCount > 1)
                                     judgementRun.purchaseCounter = 0;
                             }
@@ -344,8 +354,9 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup
-                                }, position, velocity);
+                                    prefabOverride = potentialPickup,
+                                    position = position
+                                }, velocity);
                                 if (Run.instance.participatingPlayerCount > 1)
                                     judgementRun.purchaseCounter = 0;
                             }

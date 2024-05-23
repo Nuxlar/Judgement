@@ -2,7 +2,7 @@ using BepInEx;
 
 namespace Judgement
 {
-  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.4.0")]
+  [BepInPlugin("com.Nuxlar.Judgement", "Judgement", "1.4.1")]
 
   public class Judgement : BaseUnityPlugin
   {

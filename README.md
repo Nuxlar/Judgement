@@ -6,6 +6,10 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ## Changelog
 
+**1.4.1**
+
+- Fix for the Devotion Update (can open chests now)
+
 **1.4.0**
 
 - Fixes Simulacrum incompat
