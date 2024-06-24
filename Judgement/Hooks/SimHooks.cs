@@ -77,22 +77,10 @@ namespace Judgement
                     "Mushroom",
                     "MushroomVoid",
                 };
-                string[] equipmentBlacklist = new string[] {
-                    "Fruit",
-                    "LifestealOnHit",
-                    "PassiveHealing",
-                    "VendingMachine"
-                };
 
                 foreach (string item in itemBlacklist)
                 {
                     RuleChoiceDef choice = RuleCatalog.FindRuleDef("Items." + item)?.FindChoice("Off");
-                    if (choice != null)
-                        self.ForceChoice(mustInclude, mustExclude, choice);
-                }
-                foreach (string equipment in equipmentBlacklist)
-                {
-                    RuleChoiceDef choice = RuleCatalog.FindRuleDef("Equipment." + equipment)?.FindChoice("Off");
                     if (choice != null)
                         self.ForceChoice(mustInclude, mustExclude, choice);
                 }
@@ -106,7 +94,7 @@ namespace Judgement
             {
                 DifficultyDef difficultyDef = DifficultyCatalog.GetDifficultyDef(self.selectedDifficulty);
                 float num1 = 1.5f * (float)self.waveIndex;
-                float num2 = 0.0506f * (difficultyDef.scalingValue * 2f);
+                float num2 = 0.0506f * (difficultyDef.scalingValue * 1.5f);
                 float num3 = Mathf.Pow(1.02f, (float)self.waveIndex);
                 self.difficultyCoefficient = (float)(1.0 + (double)num2 * (double)num1) * num3;
                 self.compensatedDifficultyCoefficient = self.difficultyCoefficient;

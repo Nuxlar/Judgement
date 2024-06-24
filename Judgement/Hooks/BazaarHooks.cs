@@ -52,8 +52,8 @@ namespace Judgement
                         shrine.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
                         shrine.GetComponent<PurchaseInteraction>().Networkcost = 0;
                         shrine.GetComponent<PurchaseInteraction>().Networkavailable = true;
-                        shrine.GetComponent<PurchaseInteraction>().contextToken = "Full Heal Shrine (Limited Uses)";
-                        shrine.GetComponent<PurchaseInteraction>().displayNameToken = "Full Heal Shrine (Limited Uses)";
+                        shrine.GetComponent<PurchaseInteraction>().contextToken = $"Full Heal Shrine {judgementRun.availableHeals} left.";
+                        shrine.GetComponent<PurchaseInteraction>().displayNameToken = $"Full Heal Shrine {judgementRun.availableHeals} left.";
                         NetworkServer.Spawn(shrine);
                     }
                     holder.transform.GetChild(2).gameObject.SetActive(false); // disable seershop

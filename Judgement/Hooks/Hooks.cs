@@ -265,8 +265,9 @@ namespace Judgement
             if (Run.instance && Run.instance.name.Contains("Judgement") && self.isPlayerControlled && !self.HasBuff(RoR2Content.Buffs.Immune))
             {
                 LoadPersistentHP(self);
-                self.baseRegen = 0f;
-                self.levelRegen = 0f;
+                GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
+                if (Run.instance.selectedDifficulty >= DifficultyIndex.Eclipse1 && judgementRun.currentWave == 0)
+                    self.healthComponent.health = self.healthComponent.fullHealth;
                 self.baseDamage *= 1.25f;
             }
         }
