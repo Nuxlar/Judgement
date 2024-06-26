@@ -6,6 +6,12 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 ## Changelog
 
+**1.4.3**
+
+- Increased difficulty scaling percentage (lowered it too much)
+- Blacklists healing equips again
+- Shrine uses should match after use now
+
 **1.4.2**
 
 - Reduced difficulty scaling percentage
@@ -66,7 +72,7 @@ There are a total of 5 rounds then you fight Mithrix at the end. Each round cons
 
 **1.3.0**
 
-- Adds Multiplayer Support!
+- Adds Multiplayer Support! (nope)
 - Adds faster portals
 - Adds persistent gold
 - Adds better seeding

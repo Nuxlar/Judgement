@@ -191,6 +191,8 @@ namespace Judgement
                     return;
                 judgementRun.availableHeals -= 1;
                 string chatMessage = judgementRun.availableHeals > 1 ? " heals left." : " heal left.";
+                self.contextToken = $"Full Heal Shrine {judgementRun.availableHeals} left.";
+                self.displayNameToken = $"Full Heal Shrine {judgementRun.availableHeals} left.";
                 Chat.SendBroadcastChat(new Chat.SimpleChatMessage() { baseToken = "You have " + judgementRun.availableHeals + chatMessage });
                 HealthComponent healthComponent = activator.GetComponent<CharacterBody>().healthComponent;
                 healthComponent.health = healthComponent.fullHealth;
