@@ -49,6 +49,7 @@ namespace Judgement
                     if (judgementRun.availableHeals != 0)
                     {
                         GameObject shrine = GameObject.Instantiate(woodShrine, new Vector3(-112.0027f, -24f, -4.5843f), Quaternion.Euler(0, 180, 0));
+                        shrine.name = "JudgementHealShrine";
                         shrine.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
                         shrine.GetComponent<PurchaseInteraction>().Networkcost = 0;
                         shrine.GetComponent<PurchaseInteraction>().Networkavailable = true;
@@ -56,15 +57,15 @@ namespace Judgement
                         shrine.GetComponent<PurchaseInteraction>().displayNameToken = $"Full Heal Shrine {judgementRun.availableHeals} left.";
                         NetworkServer.Spawn(shrine);
                     }
-                    holder.transform.GetChild(2).gameObject.SetActive(false); // disable seershop
-                    holder.transform.GetChild(3).gameObject.SetActive(false); // disable cauldrons
+                    holder.transform.GetChild(1).gameObject.SetActive(false); // disable seershop
+                    holder.transform.GetChild(2).gameObject.SetActive(false); // disable cauldrons
                     GameObject kickout = SceneInfo.instance.transform.Find("KickOutOfShop").gameObject;
                     if ((bool)kickout)
                     {
                         kickout.gameObject.SetActive(true);
                         kickout.transform.GetChild(8).gameObject.SetActive(false);
                     }
-                    holder.transform.GetChild(0).GetChild(2).Rotate(0, 0, 50);
+                    //holder.transform.GetChild(0).GetChild(2).Rotate(0, 0, 50);
 
                     if (judgementRun.currentWave == 4 || judgementRun.currentWave == 8)
                     {
@@ -152,9 +153,11 @@ namespace Judgement
                         DirectorSpawnRequest directorSpawnRequest = new DirectorSpawnRequest(spawnCard, placementRule, rng);
                         instance.TrySpawnObject(directorSpawnRequest);
                     };
-                    for (int i = 0; i < holder.transform.GetChild(0).GetChild(2).childCount; i++)
+
+                    for (int i = 0; i < 5; i++)
                     {
-                        Transform child = holder.transform.GetChild(0).GetChild(2).GetChild(i);
+                        // 3 -> 7
+                        Transform child = holder.transform.GetChild(0).GetChild(i + 3);
                         if (judgementRun.currentWave != 0 && judgementRun.currentWave != 4 && i == 2)
                         {
                             GameObject.Destroy(child.gameObject);
@@ -167,13 +170,6 @@ namespace Judgement
                         NetworkServer.Spawn(fire);
                         child.gameObject.GetComponent<PurchaseInteraction>().costType = CostTypeIndex.None;
                     }
-                    for (int i = 0; i < Run.instance.participatingPlayerCount - 1; i++)
-                    {
-                        GameObject newTable = GameObject.Instantiate(holder.transform.GetChild(0).GetChild(2), holder.transform.GetChild(0)).gameObject;
-                        newTable.transform.localPosition = new Vector3(2.83f, -8.51f, -3.39f);
-                        newTable.transform.localRotation = Quaternion.Euler(270, 330.3174f, 0);
-                        NetworkServer.Spawn(newTable);
-                    }
                     // getchild(0) lunar shop
                     // getchild(0)(2) table, disable all children
                     // item positions 
@@ -185,7 +181,7 @@ namespace Judgement
         private void PurchaseInteraction_OnInteractionBegin(On.RoR2.PurchaseInteraction.orig_OnInteractionBegin orig, PurchaseInteraction self, Interactor activator)
         {
             GameMode.JudgementRun judgementRun = Run.instance.gameObject.GetComponent<GameMode.JudgementRun>();
-            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "ShrineHealing(Clone)")
+            if (self.name == "JudgementHealShrine")
             {
                 if (judgementRun.availableHeals == 0)
                     return;
@@ -205,13 +201,13 @@ namespace Judgement
                 }, true);
                 return;
             }
-            if (Run.instance && Run.instance.name.Contains("Judgement") && self.name == "DuplicatorLarge(Clone)")
+            if (judgementRun && self.name == "DuplicatorLarge(Clone)")
             {
                 int count = activator.GetComponent<CharacterBody>().inventory.GetItemCount(DLC1Content.Items.RegeneratingScrap);
                 if (count == 0)
                     return;
             }
-            if (Run.instance && Run.instance.name.Contains("Judgement") && (self.name == "LunarShopTerminal" || self.name == "LunarShopTerminal (1)"))
+            if (judgementRun && (self.name == "LunarShopTerminal" || self.name == "LunarShopTerminal (1)"))
             {
                 ShopTerminalBehavior shopTerminalBehavior = self.GetComponent<ShopTerminalBehavior>();
                 self.GetComponent<PurchaseInteraction>().available = false;
@@ -241,8 +237,7 @@ namespace Judgement
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                            }, position, velocity);
                             break;
                         case 2:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -251,8 +246,7 @@ namespace Judgement
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
                                 prefabOverride = potentialPickup,
-                                position = position,
-                            }, velocity);
+                            }, position, velocity);
                             break;
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -260,9 +254,8 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
                             break;
                         case 4:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -270,9 +263,8 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
                             break;
                         case 5:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -280,11 +272,9 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
-                            if (Run.instance.participatingPlayerCount > 1)
-                                judgementRun.purchaseCounter = 0;
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
+                            judgementRun.purchaseCounter = 0;
                             break;
                     }
                 }
@@ -298,9 +288,8 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
                             break;
                         case 2:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -308,9 +297,8 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
                             break;
                         case 3:
                             PickupDropletController.CreatePickupDroplet(new GenericPickupController.CreatePickupInfo()
@@ -318,9 +306,8 @@ namespace Judgement
                                 pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier1),
                                 pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtWhite, judgementRun.bazaarRng),
                                 rotation = Quaternion.identity,
-                                prefabOverride = potentialPickup,
-                                position = position
-                            }, velocity);
+                                prefabOverride = potentialPickup
+                            }, position, velocity);
                             break;
                         case 4:
                             if (judgementRun.currentWave == 4 || judgementRun.currentWave == 8)
@@ -330,9 +317,8 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier3),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtRed, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup,
-                                    position = position
-                                }, velocity);
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
                             }
                             else
                             {
@@ -341,10 +327,9 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(ItemTier.Tier2),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtGreen, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup,
-                                    position = position
-                                }, velocity);
-                                if (Run.instance.participatingPlayerCount > 1)
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
+                                if (judgementRun.currentWave != 4)
                                     judgementRun.purchaseCounter = 0;
                             }
                             break;
@@ -356,11 +341,9 @@ namespace Judgement
                                     pickupIndex = PickupCatalog.FindPickupIndex(EquipmentCatalog.FindEquipmentIndex("DroneBackup")),
                                     pickerOptions = PickupPickerController.GenerateOptionsFromDropTable(3, dtEquip, judgementRun.bazaarRng),
                                     rotation = Quaternion.identity,
-                                    prefabOverride = potentialPickup,
-                                    position = position
-                                }, velocity);
-                                if (Run.instance.participatingPlayerCount > 1)
-                                    judgementRun.purchaseCounter = 0;
+                                    prefabOverride = potentialPickup
+                                }, position, velocity);
+                                judgementRun.purchaseCounter = 0;
                             }
                             break;
                     }

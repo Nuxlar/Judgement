@@ -8,12 +8,13 @@ using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.SceneManagement;
 using EntityStates.Missions.BrotherEncounter;
 using MonoMod.Cil;
+using System.Collections;
 
 namespace Judgement
 {
     public class Hooks
     {
-        private PostProcessProfile ppProfile = Addressables.LoadAssetAsync<PostProcessProfile>("RoR2/Base/title/ppSceneEclipseStandard.asset").WaitForCompletion();
+        private PostProcessProfile ppProfile = Addressables.LoadAssetAsync<PostProcessProfile>("RoR2/Base/title/PostProcessing/ppSceneEclipseStandard.asset").WaitForCompletion();
         private Material spaceStarsMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/eclipseworld/matEclipseStarsSpheres.mat").WaitForCompletion();
         private Material altSkyboxMat = Addressables.LoadAssetAsync<Material>("RoR2/Base/artifactworld/matAWSkySphere.mat").WaitForCompletion();
 
@@ -151,9 +152,9 @@ namespace Judgement
                 newTrack = MusicTrackCatalog.FindMusicTrackDef("muSong23");
         }
 
-        private void Stage_Start(On.RoR2.Stage.orig_Start orig, Stage self)
+        private IEnumerator Stage_Start(On.RoR2.Stage.orig_Start orig, Stage self)
         {
-            orig(self);
+            yield return orig(self);
             if (Run.instance && Run.instance.name.Contains("Judgement"))
             {
                 float ambientIntensity = 0.85f;
